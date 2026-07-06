@@ -15,6 +15,7 @@ from .scanner import get_model_files
 from .workflow_analyzer import analyze_workflow_models, identify_missing_models
 from .matcher import find_matches
 from .workflow_updater import update_workflow_nodes
+from .hardware_preferences import apply_hardware_preferences, current_hardware_profile
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +210,7 @@ def analyze_and_find_matches(
     
     # Get available models
     available_models = get_model_files()
+    hardware_profile = current_hardware_profile()
     
     # Identify missing models
     missing_models = identify_missing_models(all_model_refs, available_models)
@@ -281,15 +283,25 @@ def analyze_and_find_matches(
                     deduplicated_matches[idx] = match
                     seen_absolute_paths[absolute_path] = match
         
+        hardware_result = apply_hardware_preferences(
+            missing,
+            deduplicated_matches,
+            available_models,
+            hardware_profile,
+        )
+        
         missing_with_matches.append({
             **missing,
-            'matches': deduplicated_matches
+            'hardware_profile': hardware_result.get('hardware_profile', hardware_profile),
+            'hardware_recommendations': hardware_result.get('hardware_recommendations', []),
+            'matches': hardware_result.get('matches', deduplicated_matches)
         })
     
     return {
         'missing_models': missing_with_matches,
         'total_missing': len(missing_with_matches),
-        'total_models_analyzed': len(all_model_refs)
+        'total_models_analyzed': len(all_model_refs),
+        'hardware_profile': hardware_profile
     }
 
 
@@ -356,4 +368,3 @@ def get_resolution_summary(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
         Same format as analyze_and_find_matches
     """
     return analyze_and_find_matches(workflow_json)
-

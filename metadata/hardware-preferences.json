@@ -1,0 +1,221 @@
+{
+  "profiles": {
+    "apple-silicon": {
+      "preferred_terms": [
+        {
+          "term": "mlx",
+          "score": 22,
+          "reason": "Apple Silicon native MLX artifact"
+        },
+        {
+          "term": "swift_mapped_mlx",
+          "score": 28,
+          "reason": "mapped for the Apple Silicon Swift/MLX route"
+        },
+        {
+          "term": "convrot",
+          "score": 18,
+          "reason": "ConvRot INT8 can use the AppleSilicon-FP8 M5 kernel when available"
+        },
+        {
+          "term": "int8mixed",
+          "score": 12,
+          "reason": "INT8 storage is a good Apple Silicon fit when the runtime has an MPS/Metal fast path"
+        },
+        {
+          "term": "bf16",
+          "score": 8,
+          "reason": "BF16 avoids unsupported MPS float8 casts and is a stable fallback"
+        },
+        {
+          "term": "qwen3vl_4b_fp8_scaled",
+          "score": 18,
+          "reason": "Krea2's Qwen3VL FP8-scaled text encoder is supported by the AppleSilicon-FP8 compatibility path"
+        },
+        {
+          "term": "qwen_image_vae",
+          "score": 10,
+          "reason": "Krea2/Anima-compatible Qwen image VAE"
+        }
+      ],
+      "avoid_terms": [
+        {
+          "term": "cuda",
+          "score": 30,
+          "reason": "CUDA-specific artifact is not portable to Apple Silicon"
+        },
+        {
+          "term": "triton",
+          "score": 25,
+          "reason": "Triton kernels are not an Apple Silicon runtime path"
+        },
+        {
+          "term": "nvfp4",
+          "score": 12,
+          "reason": "NVFP4 is NVIDIA-oriented; prefer an Apple-tested local route first"
+        }
+      ]
+    },
+    "cuda": {
+      "preferred_terms": [
+        {
+          "term": "fp8",
+          "score": 16,
+          "reason": "CUDA GPUs commonly have mature FP8 kernels"
+        },
+        {
+          "term": "mxfp8",
+          "score": 14,
+          "reason": "MXFP8 is a native NVIDIA-oriented quantization target"
+        },
+        {
+          "term": "nvfp4",
+          "score": 12,
+          "reason": "NVFP4 is a Blackwell/NVIDIA-oriented quantization target"
+        },
+        {
+          "term": "convrot",
+          "score": 10,
+          "reason": "ConvRot INT8 is a strong CUDA quality/performance option when supported"
+        }
+      ],
+      "avoid_terms": [
+        {
+          "term": "mlx",
+          "score": 35,
+          "reason": "MLX artifacts are Apple Silicon-specific"
+        },
+        {
+          "term": "swift_mapped_mlx",
+          "score": 40,
+          "reason": "Swift/MLX mapped artifact is not a CUDA route"
+        }
+      ]
+    },
+    "rocm": {
+      "preferred_terms": [
+        {
+          "term": "bf16",
+          "score": 12,
+          "reason": "BF16 is the safer ROCm fallback when CUDA/Apple-specific kernels are unavailable"
+        },
+        {
+          "term": "fp16",
+          "score": 8,
+          "reason": "FP16 is broadly portable on ROCm"
+        }
+      ],
+      "avoid_terms": [
+        {
+          "term": "mlx",
+          "score": 35,
+          "reason": "MLX artifacts are Apple Silicon-specific"
+        },
+        {
+          "term": "cuda",
+          "score": 25,
+          "reason": "CUDA-specific artifact is not a ROCm route"
+        }
+      ]
+    },
+    "cpu": {
+      "preferred_terms": [
+        {
+          "term": "int8",
+          "score": 8,
+          "reason": "INT8 may reduce CPU memory pressure"
+        }
+      ],
+      "avoid_terms": [
+        {
+          "term": "mlx",
+          "score": 35,
+          "reason": "MLX artifacts are Apple Silicon-specific"
+        },
+        {
+          "term": "cuda",
+          "score": 25,
+          "reason": "CUDA-specific artifact is not a CPU route"
+        }
+      ]
+    }
+  },
+  "recommendations": [
+    {
+      "id": "apple-krea2-turbo-convrot-int8",
+      "profiles": ["apple-silicon"],
+      "matches_any": ["krea2", "krea 2", "krea-2"],
+      "categories": ["diffusion_models", "checkpoints", "unknown"],
+      "category": "diffusion_models",
+      "filename": "krea2_turbo_int8_convrot.safetensors",
+      "local_names": [
+        "krea2_turbo_int8_convrot.safetensors",
+        "krea2_turbo_convrot_int8mixed.safetensors",
+        "Krea2_Turbo_convrot_int8mixed.safetensors"
+      ],
+      "label": "Krea2 Turbo ConvRot INT8",
+      "reason": "Best current Krea2 Turbo route for M5 Apple Silicon when AppleSilicon-FP8 ASFP8_INT8_EXT is enabled.",
+      "download": {
+        "source": "huggingface",
+        "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_int8_convrot.safetensors",
+        "filename": "krea2_turbo_int8_convrot.safetensors",
+        "directory": "diffusion_models",
+        "size": 13492686496
+      }
+    },
+    {
+      "id": "apple-krea2-text-encoder",
+      "profiles": ["apple-silicon"],
+      "matches_any": ["qwen3vl", "qwen3-vl", "qwen3 vl", "krea2"],
+      "categories": ["text_encoders", "clip", "unknown"],
+      "category": "text_encoders",
+      "filename": "qwen3vl_4b_fp8_scaled.safetensors",
+      "local_names": ["qwen3vl_4b_fp8_scaled.safetensors"],
+      "label": "Qwen3VL 4B FP8-scaled text encoder",
+      "reason": "Krea2 text encoder that AppleSilicon-FP8 can decode on MPS; smaller than BF16 and already used by the optimized Krea2 route.",
+      "download": {
+        "source": "huggingface",
+        "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors",
+        "filename": "qwen3vl_4b_fp8_scaled.safetensors",
+        "directory": "text_encoders",
+        "size": 5242467968
+      }
+    },
+    {
+      "id": "apple-biglove-klein3-mlx",
+      "profiles": ["apple-silicon"],
+      "matches_any": ["bigloveklein3", "biglove klein3", "biglove_klein3", "flux2", "flux 2"],
+      "categories": ["diffusion_models", "unet", "unknown"],
+      "category": "diffusion_models",
+      "filename": "BigLoveKlein3_mxfp8_swift_mapped_mlx.safetensors",
+      "local_names": [
+        "BigLoveKlein3_mxfp8_swift_mapped_mlx.safetensors",
+        "BigLoveKlein3_mxfp8_mlx_native.safetensors",
+        "BigLoveKlein3_bf16.safetensors"
+      ],
+      "label": "BigLove Klein3 Apple Silicon route",
+      "reason": "Prefer the local Swift/MLX-mapped or BF16 fallback files over generic FP8/MXFP8 Comfy routes on Apple Silicon."
+    },
+    {
+      "id": "cuda-krea2-turbo-fp8",
+      "profiles": ["cuda"],
+      "matches_any": ["krea2", "krea 2", "krea-2"],
+      "categories": ["diffusion_models", "checkpoints", "unknown"],
+      "category": "diffusion_models",
+      "filename": "krea2_turbo_fp8_scaled.safetensors",
+      "local_names": [
+        "krea2_turbo_fp8_scaled.safetensors",
+        "Krea2_Turbo_fp8mixed.safetensors"
+      ],
+      "label": "Krea2 Turbo FP8",
+      "reason": "Good default Krea2 Turbo route for recent NVIDIA GPUs.",
+      "download": {
+        "source": "huggingface",
+        "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+        "filename": "krea2_turbo_fp8_scaled.safetensors",
+        "directory": "diffusion_models",
+        "size": 13141730784
+      }
+    }
+  ]
+}

@@ -57,6 +57,7 @@ class ModelLinkerExtension:
             try:
                 from .core.linker import analyze_and_find_matches, apply_resolution
                 from .core.scanner import get_model_files
+                from .core.hardware_preferences import preferred_download_source
             except ImportError as e:
                 self.logger.error(f"Model Linker: Could not import core modules: {e}")
                 return False
@@ -104,7 +105,17 @@ class ModelLinkerExtension:
                             if not has_perfect_match:
                                 filename = missing.get('original_path', '').split('/')[-1].split('\\')[-1]
                                 
-                                # 0. Check workflow URL first (highest priority - directly from workflow)
+                                # 0. Hardware-aware recommendation. This may
+                                # intentionally differ from the filename in the
+                                # workflow when a different artifact is the best
+                                # route for this machine (for example Krea2
+                                # ConvRot INT8 on M5 Apple Silicon).
+                                hardware_download = preferred_download_source(missing)
+                                if hardware_download:
+                                    missing['download_source'] = hardware_download
+                                    continue
+                                
+                                # 1. Check workflow URL first (highest priority - directly from workflow)
                                 workflow_url = missing.get('workflow_url', '')
                                 if workflow_url:
                                     # Determine source from URL
@@ -136,7 +147,7 @@ class ModelLinkerExtension:
                                     }
                                     continue
                                 
-                                # 1. Check popular models (always exact match)
+                                # 2. Check popular models (always exact match)
                                 popular_info = get_popular_model_url(filename)
                                 if popular_info:
                                     missing['download_source'] = {
@@ -149,7 +160,7 @@ class ModelLinkerExtension:
                                     }
                                     continue
                                 
-                                # 2. Check model list (ComfyUI Manager database)
+                                # 3. Check model list (ComfyUI Manager database)
                                 # Use exact_only=True to avoid confusing fuzzy matches for downloads
                                 model_list_result = search_model_list(filename, exact_only=True)
                                 if model_list_result:
@@ -166,7 +177,7 @@ class ModelLinkerExtension:
                                     }
                                     continue
                                 
-                                # 3. Search HuggingFace (exact_only=True for downloads)
+                                # 4. Search HuggingFace (exact_only=True for downloads)
                                 hf_result = search_huggingface_for_file(filename, exact_only=True)
                                 if hf_result:
                                     missing['download_source'] = {
@@ -179,7 +190,7 @@ class ModelLinkerExtension:
                                     }
                                     continue
                                 
-                                # 4. Search CivitAI (exact_only=True for downloads)
+                                # 5. Search CivitAI (exact_only=True for downloads)
                                 civitai_result = search_civitai_for_file(filename, exact_only=True)
                                 if civitai_result:
                                     missing['download_source'] = {
